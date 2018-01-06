@@ -39,16 +39,3 @@ class Block {
         this.sender = sender;
     }
 }
-
-let user1 = uuid();
-let user2 = uuid();
-
-let benCoin = new Blockchain({
-    [user1]: 3,
-    [user2]: 5
-});
-benCoin.addBlock(new Block(user1, {
-    [user2]: 3
-}, benCoin.chain));
-
-console.log((benCoin.validateChain()));
