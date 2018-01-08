@@ -1,25 +1,44 @@
 const uuid = require("uuid");
 const ursa = require("ursa");
 const bcrypt = require("bcrypt");
-const salt = bcrypt.genSaltSync(10);
+const salt = bcrypt.genSaltSync(12);
+
+function verifyUsers(sender, recipients, users) {
+    if (!users.includes(sender))
+        throw `Invalid sender: ${sender}`;
+    for (let rec in recipients) {
+        if (!users.includes(rec)) {
+            throw `Invalid recipient: ${rec}`
+        }
+    }
+    return true;
+}
 
 class Blockchain {
     constructor(tx) {
         this.users = ["mint", ...Array.from(Object.keys(tx))];
-        this.chain = new Block("mint", tx);
+        this.chain = new Block("mint", tx, null);
     }
-    addBlock(block) {
-        this.chain = block;
+    addUser(user) {
+        this.users.push(user);
+    }
+    addBlock(sender, tx) {
+        try {
+            let verified = verifyUsers(sender, tx, this.users);
+        } catch (e) {
+            console.error(e);
+            return;
+        }
+        this.chain = new Block(sender, tx, this.chain);
     }
     validateChain() {
-        let currBlock;
-        do {
-            currBlock = this.chain;
-        } while (!currBlock.prevHash === "0") {
+        let graph = {};
+        let currBlock = this.chain;
+        while (currBlock.prevHash !== "0") {
             let data = JSON.stringify(currBlock.prevBlock);
             let hash = currBlock.prevHash;
             if (!bcrypt.compareSync(data, hash)) {
-                return false;
+                throw Error(`Invalid block: ${data}`);
             }
             currBlock = currBlock.prevBlock;
         }
@@ -28,14 +47,20 @@ class Blockchain {
 }
 
 class Block {
-    constructor(sender, tx, prevBlock = null) {
-        //id
+    constructor(sender, tx, prevBlock) {
         this.id = uuid();
-        //prev block
         this.prevBlock = prevBlock;
-        //hash of prev block
-        this.prevHash = !prevBlock ? "0" : bcrypt.hashSync(JSON.stringify(prevBlock), 10);
+        this.prevHash = !prevBlock ? "0" : bcrypt.hashSync(JSON.stringify(prevBlock), salt);
         this.tx = tx;
         this.sender = sender;
     }
 }
+
+let benCoin = new Blockchain({
+    [uuid()]: 2,
+    [uuid()]: 5
+});
+
+benCoin.addBlock(benCoin.users[1], {
+    [benCoin.users[2]]: 2
+})
