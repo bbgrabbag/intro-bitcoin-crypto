@@ -35,7 +35,7 @@ class Blockchain {
         let graph = {};
         let currBlock = this.chain;
         while (currBlock.prevHash !== "0") {
-            let data = JSON.stringify(currBlock.prevBlock);
+            let data = JSON.stringify(currBlock.prevBlock.id + currBlock.prevBlock.tx + currBlock.prevBlock.sender);
             let hash = currBlock.prevHash;
             if (!bcrypt.compareSync(data, hash)) {
                 throw Error(`Invalid block: ${data}`);
@@ -50,17 +50,16 @@ class Block {
     constructor(sender, tx, prevBlock) {
         this.id = uuid();
         this.prevBlock = prevBlock;
-        this.prevHash = !prevBlock ? "0" : bcrypt.hashSync(JSON.stringify(prevBlock), salt);
+        this.prevHash = !prevBlock ? "0" : bcrypt.hashSync(JSON.stringify(prevBlock.id + prevBlock.tx + prevBlock.sender), salt);
         this.tx = tx;
         this.sender = sender;
     }
 }
 
 let benCoin = new Blockchain({
-    [uuid()]: 2,
-    [uuid()]: 5
+    [uuid()]: 5,
+    [uuid()]: 10
 });
 
-benCoin.addBlock(benCoin.users[1], {
-    [benCoin.users[2]]: 2
-})
+
+
